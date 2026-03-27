@@ -63,3 +63,55 @@ func TestClient_AddPhoneNumberConfig(t *testing.T) {
 		t.Error("expected error when getting non-existent config, got nil")
 	}
 }
+
+func TestClient_FluentMappers(t *testing.T) {
+	config := domain.WhatsAppConfig{
+		Version:         "v18.0",
+		UserAccessToken: "EAABtesttoken",
+		PhoneNumberID:   "123",
+		WABAID:          "456",
+	}
+
+	client := NewClient(config)
+	
+	// Test Primary Extraction
+	primary := client.Primary()
+	if primary == nil {
+		t.Fatal("Primary should not be nil")
+	}
+	if primary.config.PhoneNumberID != "123" {
+		t.Errorf("Primary extraction mismatch")
+	}
+
+	// Test Fluent Mappers instantiation coverage
+	if msg := primary.Messages(); msg == nil {
+		t.Errorf("Messages client mapping failed")
+	}
+	if md := primary.Media(); md == nil {
+		t.Errorf("Media client mapping failed")
+	}
+	if w := primary.WABA(); w == nil {
+		t.Errorf("WABA client mapping failed")
+	}
+	if bp := primary.BusinessProfiles(); bp == nil {
+		t.Errorf("BusinessProfiles client mapping failed")
+	}
+	if pn := primary.PhoneNumbers(); pn == nil {
+		t.Errorf("PhoneNumbers client mapping failed")
+	}
+	if qr := primary.QRCodes(); qr == nil {
+		t.Errorf("QRCodes client mapping failed")
+	}
+	if an := primary.Analytics(); an == nil {
+		t.Errorf("Analytics client mapping failed")
+	}
+	if up := primary.Uploads(); up == nil {
+		t.Errorf("Uploads client mapping failed")
+	}
+
+	// Test Webhook Singleton mapping
+	wh := client.Webhook("my_secret", "verify_it")
+	if wh == nil {
+		t.Errorf("Webhook singleton mapping failed")
+	}
+}

@@ -3,30 +3,21 @@
 ![Go Version](https://img.shields.io/badge/go-1.18%2B-blue.svg)
 ![WhatsApp API](https://img.shields.io/badge/WhatsApp%20Cloud-v20.0-25d366.svg)
 
-Um SDK oficial do Golang para interagir com naturalidade com a [API Cloud do WhatsApp Institucional (Business)](https://developers.facebook.com/docs/whatsapp/cloud-api/). 
-Projetado focado primariamente em DX (Experiência do Desenvolvedor), usando arquitetura limpa hexagonal, dependências zero de terceiros (`standard library` apenas) e forte resiliência para concorrências e multi-têntencias.
-
-## Visão Geral
-
-O gigantesco escopo de comunicação do WhatsApp Business Manager foi domado em 5 módulos lógicos principais:
-1. `messages`: Para o envio síncrono proativo pro usuário (Textos, Mídias, Templates com Botões);
-2. `webhook`: Um superservidor/Listener que gerencia a dolorosa etapa de Handshake HTTP GET (Cloud API auth) e o parser contínuo e roteamento de Webhooks JSON (Eventos de leitura, entrega, e resposta do cliente);
-3. `media`: Soluções Out-Of-The-Box em *Multipart Streaming* e *Download Encriptado* para hospedar e extrair Voice Notes/PDFs da nuvem da Meta de volta pra você, poupando a sua memória RAM;
-4. `businessprofiles` & `waba`: Alterações administrativas sistêmicas da Entidade da Conta;
-5. `phonenumbers`: Trinca o Setup do P.I.N para ativação de um Número sob o escopo WABA da corporação.
+Um SDK oficial em Golang para interagir fluida e estaticamente com a [API Cloud do WhatsApp Business](https://developers.facebook.com/docs/whatsapp/cloud-api/).
+Construído com foco resoluto em **DX (Developer Experience)**, este SDK utiliza uma arquitetura limpa (Hexagonal/VIPER) estrita e garante dependência ZERO de frameworks externos (unicamente a **Standard Library** do Go), imune a quebras de compatibilidade.
 
 ---
 
 ## 🚀 Como Iniciar
 
 ### 1. Instalação
-Incorpore-o em seu `go.mod` facilmente:
+Incorpore-o ao seu módulo executando:
 ```bash
 go get -u github.com/diegoyosiura/go-whatsapp-cloud
 ```
 
-### 2. Disparando seu Primeiro Template MSG
-Veja como a complexidade inteira do payload e tokens se restringe a poucas linhas:
+### 2. Configurando o Client Master (Multi-Tenant)
+A arquitetura foi refinada para suporte nativo assíncrono a múltiplos números de telefone (`tenant`) de forma transparente sob o mesmo servidor.
 
 ```go
 package main
@@ -35,41 +26,72 @@ import (
 	"context"
 	"os"
 
-	"github.com/diegoyosiura/go-whatsapp-cloud/messages"
+	whatsapp "github.com/diegoyosiura/go-whatsapp-cloud"
+	"github.com/diegoyosiura/go-whatsapp-cloud/internal/core/domain"
 )
 
 func main() {
-    // Inject API Keys
-	client := messages.NewClient("v20.0", os.Getenv("PHONE_ID"), os.Getenv("USER_TOKEN"))
+	// Inicialize a Configuração Primária do Hub
+	client := whatsapp.NewClient(domain.WhatsAppConfig{
+		Version:         "v20.0",
+		UserAccessToken: os.Getenv("USER_TOKEN"),
+		PhoneNumberID:   os.Getenv("PHONE_ID"),
+		WABAID:          os.Getenv("WABA_ID"), // Exclusivo para métricas WABA/QR
+	})
 
+	// (Opcional) Adicione suporte a um segundo número na mesma instância!
+	client.AddPhoneNumberConfig("PHONE_ID_2", domain.WhatsAppConfig{
+        Version: "v20.0",
+        UserAccessToken: "TOKEN_2",
+        PhoneNumberID: "PHONE_ID_2",
+    })
+```
+
+### 3. Disparando Mensagens (Fluent API)
+O SDK expõe métodos encadeados lógicos e blindados contextualmente (Fluent Builders). Para mandar Textos via Instância Primária:
+
+```go
 	ctx := context.Background()
-	_, err := client.SendTemplate(ctx, "+551199999999", "hello_world", "en_US", nil)
+	_, err := client.Primary().Messages().SendText(ctx, "+551199999999", "Olá do Go SDK!")
 	if err != nil {
 		panic(err)
 	}
+    
+    // Trabalhando com a Instância Secundária do mesmo Client Global
+    client.ForPhone("PHONE_ID_2").Messages().SendText(ctx, "+551188888888", "Mensagem da filial!")
 }
 ```
 
-### 3. Subindo o seu próprio Bot (Webhook Receiver)
-Receba e parseie eventos em apenas 1 linha de `http.ServeMux`! Todos os Eventos como leituras (`READ`), mensagens recebidas, Status e mídias vêm convertidos para Go Structs limpos, checados criptograficamente.
+### 4. Subindo o seu próprio Bot (Webhook Receiver)
+Receba e escute eventos da API Cloud em apenas 1 linha de `http.ServeMux`! Webhooks chegam desestruturados em Structs Go perfeitamente tipadas após cruzamento criptográfico `X-Hub-Signature`.
 
 ```go
-import "github.com/diegoyosiura/go-whatsapp-cloud/webhook"
-
-func main() {
-	client := webhook.NewClient(os.Getenv("SECRET"), os.Getenv("VERIFY_TOKEN"))
+	// Webhooks são agnósticos de telefone e configurados à nível de App (Meta Dev)
+	whClient := client.Webhook(os.Getenv("APP_SECRET"), os.Getenv("VERIFY_TOKEN"))
 
 	mux := http.NewServeMux()
-	mux.Handle("/webhook", client.HTTPHandler())
+	mux.Handle("/webhook", whClient.HTTPHandler())
 
 	http.ListenAndServe(":8080", mux)
-}
 ```
 
-## Explorando Mais
-Acessem a pasta absoluta de base (`/examples`) no código fonte do SDK! Encontrem:
-- **`examples/send_template/main.go`**: Fluxo extenso de comunicação com o Usuário Final;
-- **`examples/webhook_bot/main.go`**: Mapeando e logando JSON payloads no terminal.
+---
 
-### Arquitetura Customizável
-O SDK utiliza Portas e Adaptadores (Hexagonal). Você não é obrigado a usar os módulos padrões incluídos na pasta `internal/adapters`. Por exemplo, a injeção nativa de Storage salva fotos no disco em C:/ ou /tmp/, mas se você desejar hospedar as mídias em um bucket S3 da AWS, basta criar seu próprio client do S3 amarrado à abstração visual do pacote *Ports* do Go Whatsapp SDK.
+## 📦 Módulos Suportados (API Coverage)
+Coberto por Table-Driven TDD's absolutos, o Core SDK abrange o espectro massivo do Graph:
+
+- **`Messages`**: Textos, Mídias e Templates Dinâmicos (*Interactive Actions*).
+- **`Media`**: Upload e Download Seguro em buffer rotativo restrito.
+- **`Webhook`**: Listener robusto de Statuses com Validação de Identidade Criptografada.
+- **`QRCodes`**: Automação profunda via prefilled messages de QR Codes de Lead.
+- **`Analytics`**: Extratores de métricas (*Billing Throughput*) focadas em Conta de Negócio ou Conversa.
+- **`PhoneNumbers`**: Bloqueios automatizados Anti-Spam (Block/Unblock) e Setups de Two-Step PIN (2FA).
+- **`BusinessProfiles`**: Gestão do Perfil Meta Business Público programaticamente (About, Addresses).
+- **`Uploads` (Resumable)**: Envio via Chunk sessions escalável para arquivos maciços corporativos (+100MB).
+
+---
+
+## 🏗️ Arquitetura Personalizável (Hexagonal Ports)
+Você não está acorrentado aos padrões locais! Se pretende gravar logs ou transbordar os bytes brutos do Whatsapp diretamente num Amazon S3 Buckets ou no Cloud SQL, a estrutura de interfaces nas pastas `/ports` aceita facilmente a injeção do seu Adapter caseiro substituindo a engine base sem quebrar o framework de Mensageria.
+
+Licenciado via MIT.

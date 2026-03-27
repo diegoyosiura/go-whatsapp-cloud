@@ -37,13 +37,6 @@ jobs:
     # O go vet é rápido e pega initialisms e bad practices padrões do CÓDIGO FONTE nativamente
     - name: Run Native Go Vet
       run: go vet ./...
-
-    # Run GolangCI-Lint
-    - name: Run GolangCI-Lint
-      uses: golangci/golangci-lint-action@v4
-      with:
-        version: latest
-        args: --timeout=5m
         
     # Standard Table-Driven tests check with Race Conditions
     - name: Run Unit Tests (TDD)

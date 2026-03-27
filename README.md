@@ -2,7 +2,7 @@
 
 ![Go Version](https://img.shields.io/badge/go-1.18%2B-blue.svg)
 ![WhatsApp API](https://img.shields.io/badge/WhatsApp%20Cloud-v20.0-25d366.svg)
-![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/Coverage-%25-brightgreen.svg)
 
 Um SDK oficial em Golang para interagir fluida e estaticamente com a [API Cloud do WhatsApp Business](https://developers.facebook.com/docs/whatsapp/cloud-api/).
 Construído com foco resoluto em **DX (Developer Experience)**, este SDK utiliza uma arquitetura limpa (Hexagonal/VIPER) estrita e garante dependência ZERO de frameworks externos (unicamente a **Standard Library** do Go), imune a quebras de compatibilidade.

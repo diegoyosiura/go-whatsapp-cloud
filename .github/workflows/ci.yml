@@ -1,0 +1,52 @@
+name: Go WhatsApp Cloud SDK CI
+
+on:
+  push:
+    branches: [ "main", "feat/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-lint:
+    name: Build, Test & Lint
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        go-version: [ "1.21.x", "1.22.x" ]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        check-latest: true
+        cache: true
+
+    - name: Download Dependencies
+      run: go mod download
+
+    - name: Verify Dependencies
+      run: go mod verify
+
+    # O go vet é rápido e pega initialisms e bad practices padrões do CÓDIGO FONTE nativamente
+    - name: Run Native Go Vet
+      run: go vet ./...
+
+    # Run GolangCI-Lint
+    - name: Run GolangCI-Lint
+      uses: golangci/golangci-lint-action@v4
+      with:
+        version: v1.56.2
+        args: --timeout=5m
+        
+    # Standard Table-Driven tests check with Race Conditions
+    - name: Run Unit Tests (TDD)
+      run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+
+    # Ensure everything compiles together
+    - name: Run Build (Dry-run Master)
+      run: go build -v ./...

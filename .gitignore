@@ -1,0 +1,42 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+*.prof
+
+# Dependency directories
+vendor/
+
+# Environment Variables and Secrets (CRITICAL)
+.env
+.env.*
+*.local
+credentials.json
+*.pem
+*.key
+*secret*
+*config.yaml
+*config.json
+!/.agents/rules/*
+
+# AI / Agent Directories
+.agents/
+.gemini/
+brain/
+*agent*/
+
+# IDE and OS Files
+.idea/
+.vscode/
+*.swp
+*.orig
+.DS_Store
+Thumbs.db

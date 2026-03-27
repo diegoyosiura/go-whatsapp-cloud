@@ -10,6 +10,8 @@ jobs:
   build-test-lint:
     name: Build, Test & Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     strategy:
       matrix:
@@ -63,3 +65,24 @@ jobs:
     # Ensure everything compiles together
     - name: Run Build (Dry-run Master)
       run: go build -v ./...
+
+    # Auto-Update Coverage Badge in README (Only on specific Matrix and Main to prevent double-pushing)
+    - name: Auto-Update README Coverage Badge
+      if: github.ref == 'refs/heads/main' && matrix.go-version == '1.22.x'
+      run: |
+        COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
+        echo "Found coverage: $COVERAGE%"
+        
+        # Replace the percentage dynamically on the Markdown file
+        sed -i -E "s/Coverage-[0-9\.]+%25/Coverage-${COVERAGE}%25/g" README.md
+        
+        # Validate mutation and trigger silent Git Push preventing loop execution using [skip ci]
+        if git diff --quiet README.md; then
+          echo "Coverage is unchanged; skip commit."
+        else
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add README.md
+          git commit -m "docs(coverage): automagic sync of test coverage reading to ${COVERAGE}% [skip ci]"
+          git push
+        fi

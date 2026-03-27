@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/diegoyosiura/go-whatsapp-cloud/webhook"
 )
@@ -32,5 +33,10 @@ func main() {
 	mux.Handle("/webhook", client.HTTPHandler())
 
 	fmt.Println("Starting Webhook Server at port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	server := &http.Server{
+		Addr:              ":8080",
+		Handler:           mux,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }

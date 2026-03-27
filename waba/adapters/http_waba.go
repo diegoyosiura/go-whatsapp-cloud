@@ -51,7 +51,9 @@ func (a *httpWABAAdapter) GetAccountInfo(ctx context.Context) (domain.AccountInf
 				Message string `json:"message"`
 			} `json:"error"`
 		}
-		json.NewDecoder(resp.Body).Decode(&errData)
+		if defErr := json.NewDecoder(resp.Body).Decode(&errData); defErr != nil {
+			return domain.AccountInfo{}, fmt.Errorf("api declined status %d and bad body: %v", resp.StatusCode, defErr)
+		}
 		return domain.AccountInfo{}, fmt.Errorf("api declined status %d: %s", resp.StatusCode, errData.Error.Message)
 	}
 

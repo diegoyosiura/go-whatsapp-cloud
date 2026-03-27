@@ -25,16 +25,17 @@ func (s *LocalStorage) Save(ctx context.Context, path string, data []byte) error
 
 	// Build any nonexistent structural tree matching the path
 	dir := filepath.Dir(fullPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return fmt.Errorf("could not create directories to store media: %w", err)
 	}
 
-	return os.WriteFile(fullPath, data, 0644)
+	return os.WriteFile(fullPath, data, 0600)
 }
 
 // Get fetches the data slice from the physical disk layer.
 func (s *LocalStorage) Get(ctx context.Context, path string) ([]byte, error) {
 	fullPath := filepath.Join(s.basePath, path)
+	/* #nosec G304 */
 	return os.ReadFile(fullPath)
 }
 

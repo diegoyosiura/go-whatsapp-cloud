@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"html"
 	"io"
 	"net/http"
 
@@ -31,7 +32,7 @@ func (h *webhookHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if mode == "subscribe" && token == h.verifyToken {
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(challenge))
+			_, _ = w.Write([]byte(html.EscapeString(challenge)))
 			return
 		}
 

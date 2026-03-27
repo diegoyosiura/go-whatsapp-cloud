@@ -118,7 +118,9 @@ func (a *httpPhoneAdapter) doPost(ctx context.Context, url string, payload inter
 				Message string `json:"message"`
 			} `json:"error"`
 		}
-		json.NewDecoder(resp.Body).Decode(&errData)
+		if defErr := json.NewDecoder(resp.Body).Decode(&errData); defErr != nil {
+			return fmt.Errorf("api declined status %d and bad body: %v", resp.StatusCode, defErr)
+		}
 		return fmt.Errorf("api declined status %d: %s", resp.StatusCode, errData.Error.Message)
 	}
 

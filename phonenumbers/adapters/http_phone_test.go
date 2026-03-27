@@ -100,3 +100,77 @@ func TestHTTPPhoneAdapter_VerifyCode(t *testing.T) {
 		}
 	})
 }
+
+func TestHTTPPhoneAdapter_SetTwoStepVerification(t *testing.T) {
+	adapter := &httpPhoneAdapter{apiVersion: "v20.0", phoneNumberID: "PHONE_ID", token: "VALID_TOKEN"}
+	mockDoer := &mockHTTPDoer{
+		Response: &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"success": true}`)),
+		},
+	}
+	adapter.client = mockDoer
+
+	t.Run("Submits PIN cleanly", func(t *testing.T) {
+		err := adapter.SetTwoStepVerification(context.Background(), domain.SetTwoStepVerificationPayload{Pin: "123456"})
+		if err != nil {
+			t.Fatalf("unexpected failure: %v", err)
+		}
+
+		bodyBytes, _ := io.ReadAll(mockDoer.Req.Body)
+		if !strings.Contains(string(bodyBytes), `"pin":"123456"`) {
+			t.Errorf("Payload missing pin: %s", string(bodyBytes))
+		}
+	})
+}
+
+func TestHTTPPhoneAdapter_BlockUsers(t *testing.T) {
+	adapter := &httpPhoneAdapter{apiVersion: "v20.0", phoneNumberID: "PHONE_ID", token: "VALID_TOKEN"}
+	mockDoer := &mockHTTPDoer{
+		Response: &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+		},
+	}
+	adapter.client = mockDoer
+
+	t.Run("Blocks User", func(t *testing.T) {
+		err := adapter.BlockUser(context.Background(), domain.BlockUserRequest{
+			MessagingProduct: "whatsapp",
+			BlockUsers: []domain.BlockUserDetail{{User: "123"}},
+		})
+		if err != nil {
+			t.Fatalf("unexpected failure: %v", err)
+		}
+		if mockDoer.Req.Method != http.MethodPost {
+			t.Errorf("Method expected POST")
+		}
+	})
+
+	t.Run("Unblocks User", func(t *testing.T) {
+		err := adapter.UnblockUser(context.Background(), domain.BlockUserRequest{
+			MessagingProduct: "whatsapp",
+			BlockUsers: []domain.BlockUserDetail{{User: "123"}},
+		})
+		if err != nil {
+			t.Fatalf("unexpected failure: %v", err)
+		}
+		if mockDoer.Req.Method != http.MethodDelete {
+			t.Errorf("Method expected DELETE")
+		}
+	})
+
+	t.Run("Gets Blocked users", func(t *testing.T) {
+		mockDoer.Response.Body = io.NopCloser(strings.NewReader(`{"data": [{"wa_id": "4444"}]}`))
+		res, err := adapter.GetBlockedUsers(context.Background())
+		if err != nil {
+			t.Fatalf("unexpected failure: %v", err)
+		}
+		if mockDoer.Req.Method != http.MethodGet {
+			t.Errorf("Method expected GET")
+		}
+		if len(res.Data) == 0 || res.Data[0].WAID != "4444" {
+			t.Errorf("Mismatch")
+		}
+	})
+}

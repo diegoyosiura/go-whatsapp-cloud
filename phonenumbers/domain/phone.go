@@ -10,3 +10,30 @@ type RequestCodePayload struct {
 type VerifyCodePayload struct {
 	Code string `json:"code"`
 }
+
+// SetTwoStepVerificationPayload maps the pin definition request.
+type SetTwoStepVerificationPayload struct {
+	Pin string `json:"pin"`
+}
+
+// BlockUserRequest wraps the list of users you want to block or unblock.
+type BlockUserRequest struct {
+	MessagingProduct string            `json:"messaging_product"`
+	BlockUsers       []BlockUserDetail `json:"block_users"`
+}
+
+// BlockUserDetail represents the nested user string inside the block flow.
+type BlockUserDetail struct {
+	User string `json:"user"`
+}
+
+// GetBlockedUsersResponse fetches the currently blocked numbers.
+type GetBlockedUsersResponse struct {
+	Data []GetBlockedUsersData `json:"data"`
+}
+
+// GetBlockedUsersData holds individual blocked number properties.
+type GetBlockedUsersData struct {
+	MessagingProduct string `json:"messaging_product"`
+	WAID             string `json:"wa_id"`
+}

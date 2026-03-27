@@ -38,3 +38,42 @@ func (s *phoneService) VerifyCode(ctx context.Context, code string) error {
 
 	return s.client.VerifyCode(ctx, payload)
 }
+
+// SetTwoStepVerification changes the 6-digit confirmation PIN of the account.
+func (s *phoneService) SetTwoStepVerification(ctx context.Context, pin string) error {
+	payload := domain.SetTwoStepVerificationPayload{
+		Pin: pin,
+	}
+	return s.client.SetTwoStepVerification(ctx, payload)
+}
+
+// BlockUser restricts a specific WhatsApp user ID from messaging the Business Account.
+func (s *phoneService) BlockUser(ctx context.Context, waID string) error {
+	payload := domain.BlockUserRequest{
+		MessagingProduct: "whatsapp",
+		BlockUsers:       []domain.BlockUserDetail{{User: waID}},
+	}
+	return s.client.BlockUser(ctx, payload)
+}
+
+// UnblockUser removes a restriction flag from a WhatsApp user ID.
+func (s *phoneService) UnblockUser(ctx context.Context, waID string) error {
+	payload := domain.BlockUserRequest{
+		MessagingProduct: "whatsapp",
+		BlockUsers:       []domain.BlockUserDetail{{User: waID}},
+	}
+	return s.client.UnblockUser(ctx, payload)
+}
+
+// GetBlockedUsers fetches an array containing all WA_IDs currently blocked.
+func (s *phoneService) GetBlockedUsers(ctx context.Context) ([]string, error) {
+	res, err := s.client.GetBlockedUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var users []string
+	for _, data := range res.Data {
+		users = append(users, data.WAID)
+	}
+	return users, nil
+}

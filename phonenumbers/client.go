@@ -33,3 +33,23 @@ func (c *Client) RequestVerificationCode(ctx context.Context, codeMethod, langua
 func (c *Client) VerifyCode(ctx context.Context, code string) error {
 	return c.service.VerifyCode(ctx, code)
 }
+
+// SetTwoStepVerification allows altering the security PIN tied to the Phone Number.
+func (c *Client) SetTwoStepVerification(ctx context.Context, pin string) error {
+	return c.service.SetTwoStepVerification(ctx, pin)
+}
+
+// BlockUser prevents a specific WhatsApp ID from routing messages back to the bot.
+func (c *Client) BlockUser(ctx context.Context, waID string) error {
+	return c.service.BlockUser(ctx, waID)
+}
+
+// UnblockUser reverses a previously established Block constraint.
+func (c *Client) UnblockUser(ctx context.Context, waID string) error {
+	return c.service.UnblockUser(ctx, waID)
+}
+
+// GetBlockedUsers retrieves a linear string array of blocked target IDs.
+func (c *Client) GetBlockedUsers(ctx context.Context) ([]string, error) {
+	return c.service.GetBlockedUsers(ctx)
+}

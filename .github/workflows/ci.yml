@@ -47,6 +47,19 @@ jobs:
     - name: Run Unit Tests (TDD)
       run: go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
 
+    # Go Security Checker (SAST) checks for unsafe patterns and hardcoded credentials
+    - name: Run Gosec Security Scanner
+      uses: securego/gosec@master
+      with:
+        args: ./...
+
+    # Official Go Vulnerability Scanner checks against known CVEs in transitive dependencies
+    - name: Run Govulncheck
+      uses: golang/govulncheck-action@v1
+      with:
+        go-version-input: ${{ matrix.go-version }}
+        check-latest: true
+
     # Ensure everything compiles together
     - name: Run Build (Dry-run Master)
       run: go build -v ./...

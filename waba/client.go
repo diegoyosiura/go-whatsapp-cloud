@@ -29,3 +29,8 @@ func NewClient(apiVersion, wabaID, token string) *Client {
 func (c *Client) GetAccountInfo(ctx context.Context) (domain.AccountInfo, error) {
 	return c.service.GetAccountInfo(ctx)
 }
+
+// ListMessageTemplates fetches all message templates registered for this WABA.
+func (c *Client) ListMessageTemplates(ctx context.Context) ([]domain.MessageTemplate, error) {
+	return c.service.ListMessageTemplates(ctx)
+}

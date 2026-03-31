@@ -23,3 +23,8 @@ func NewWABAService(client ports.WABAClient) ports.WABAService {
 func (s *wabaService) GetAccountInfo(ctx context.Context) (domain.AccountInfo, error) {
 	return s.client.GetAccountInfo(ctx)
 }
+
+// ListMessageTemplates retrieves all message templates for the WABA.
+func (s *wabaService) ListMessageTemplates(ctx context.Context) ([]domain.MessageTemplate, error) {
+	return s.client.ListMessageTemplates(ctx)
+}

@@ -64,3 +64,48 @@ func (a *httpWABAAdapter) GetAccountInfo(ctx context.Context) (domain.AccountInf
 
 	return parsed, nil
 }
+
+// ListMessageTemplates fetches all message templates from the WABA, handling pagination.
+func (a *httpWABAAdapter) ListMessageTemplates(ctx context.Context) ([]domain.MessageTemplate, error) {
+	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?limit=100", a.apiVersion, a.wabaID)
+
+	var all []domain.MessageTemplate
+	for url != "" {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+a.token)
+
+		resp, err := a.client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			var errData struct {
+				Error struct {
+					Message string `json:"message"`
+				} `json:"error"`
+			}
+			if defErr := json.NewDecoder(resp.Body).Decode(&errData); defErr != nil {
+				return nil, fmt.Errorf("api declined status %d", resp.StatusCode)
+			}
+			return nil, fmt.Errorf("api declined status %d: %s", resp.StatusCode, errData.Error.Message)
+		}
+
+		var result domain.MessageTemplateList
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return nil, err
+		}
+
+		all = append(all, result.Data...)
+
+		url = ""
+		if result.Paging != nil && result.Paging.Next != "" {
+			url = result.Paging.Next
+		}
+	}
+	return all, nil
+}

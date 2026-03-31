@@ -13,4 +13,5 @@ type HTTPDoer interface {
 
 type WABAClient interface {
 	GetAccountInfo(ctx context.Context) (domain.AccountInfo, error)
+	ListMessageTemplates(ctx context.Context) ([]domain.MessageTemplate, error)
 }
